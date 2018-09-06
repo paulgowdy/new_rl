@@ -13,6 +13,7 @@ from canton import *
 import matplotlib.pyplot as plt 
 
 from process_dict_obs import *
+from reward_shaping import *
 
 class ddpg_agent(object):
 
@@ -273,6 +274,8 @@ class ddpg_agent(object):
 
 			# implement frameskip here
 
+			learning_reward = 0
+
 			for _ in range(frameskip):
 
 				steps +=1
@@ -280,6 +283,9 @@ class ddpg_agent(object):
 				observation_d, reward, done, _info = env.step(action_out, project = False)
 				
 				total_reward += reward
+				learning_reward += reward_shaping(observation_d, reward)
+
+			#learning_reward = reward_shaping(observation_d, learning_reward)
 
 			observation = process_obs_dict(observation_d)
 
@@ -287,7 +293,7 @@ class ddpg_agent(object):
 
 			if self.training == True:
 		  
-				self.feed_one((observation_before_action,action,reward,isdone,observation)) # s1,a1,r1,isdone,s2
+				self.feed_one((observation_before_action, action, learning_reward, isdone, observation)) # s1,a1,r1,isdone,s2
 				self.train()
 				#print('train here')
 
@@ -392,7 +398,7 @@ if __name__=='__main__':
 
 	
 
-	noise_level = 1
+	noise_level = 0.8
 	noise_decay_rate = 0.005
 	noise_floor = 0
 	noiseless = 0.0001
